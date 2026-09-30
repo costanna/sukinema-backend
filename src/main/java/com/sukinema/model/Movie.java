@@ -1,7 +1,11 @@
 package com.sukinema.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,50 +14,67 @@ import java.util.regex.Pattern;
 @Table(name = "movies")
 public class Movie {
 
+    // id, id de YouTube, likes y fecha los fija el servidor: se ignoran si llegan en la petición
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
     @NotBlank(message = "El título es obligatorio")
+    @Size(max = 255, message = "El título no puede superar los 255 caracteres")
     private String title;
 
+    @Size(max = 2000, message = "La sinopsis no puede superar los 2000 caracteres")
     @Column(length = 2000)
     private String overview;
 
     @NotBlank(message = "La URL del tráiler es obligatoria")
+    @Size(max = 255, message = "La URL del tráiler no puede superar los 255 caracteres")
     private String trailerUrl;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String youtubeId;
 
+    @Size(max = 1000, message = "La URL de la imagen de fondo no puede superar los 1000 caracteres")
     @Column(length = 1000)
     private String backdropUrl;
 
+    @Size(max = 1000, message = "La URL del póster no puede superar los 1000 caracteres")
     @Column(length = 1000)
     private String posterUrl;
 
     private Integer releaseYear;
 
+    @Size(max = 255, message = "La coincidencia no puede superar los 255 caracteres")
     private String matchScore;
 
+    @Size(max = 255, message = "La clasificación no puede superar los 255 caracteres")
     private String ageRating;
 
+    @Size(max = 255, message = "La duración no puede superar los 255 caracteres")
     private String duration;
 
+    @Size(max = 255, message = "La categoría no puede superar los 255 caracteres")
     private String category;
 
+    @Size(max = 255, message = "Los géneros no pueden superar los 255 caracteres")
     private String genres;
 
+    @Size(max = 255, message = "El reparto no puede superar los 255 caracteres")
     @Column(name = "movie_cast")
     private String cast;
 
+    @Size(max = 255, message = "El director no puede superar los 255 caracteres")
     private String director;
 
     private boolean featured = false;
 
     private boolean trending = false;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private int likes = 0;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
     public Movie() {
@@ -98,6 +119,14 @@ public class Movie {
         }
     }
 
+    // La validación falla si la URL no lleva a un vídeo de YouTube
+    @JsonIgnore
+    @AssertTrue(message = "La URL del tráiler debe ser un enlace o un ID de vídeo de YouTube")
+    public boolean isYoutubeTrailer() {
+        return trailerUrl == null || trailerUrl.isBlank() || !extractYoutubeId(trailerUrl).isEmpty();
+    }
+
+    /** Devuelve el ID del vídeo, o una cadena vacía si la URL no es de YouTube. */
     public static String extractYoutubeId(String url) {
         if (url == null || url.trim().isEmpty()) {
             return "";
@@ -108,13 +137,13 @@ public class Movie {
         }
 
         Pattern pattern = Pattern.compile(
-            "(?:https?://)?(?:www\\.)?(?:youtube\\.com/(?:watch\\?v=|embed/|v/|shorts/)|youtu\\.be/)([a-zA-Z0-9_-]{11})"
+            "(?:youtube\\.com/(?:watch\\?(?:.*&)?v=|embed/|v/|shorts/|live/)|youtu\\.be/)([a-zA-Z0-9_-]{11})"
         );
         Matcher matcher = pattern.matcher(url);
         if (matcher.find()) {
             return matcher.group(1);
         }
-        return url;
+        return "";
     }
 
     // Getters and Setters

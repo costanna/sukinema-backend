@@ -61,9 +61,21 @@ En Render, cambia `CORS_ALLOWED_ORIGINS` por la URL exacta de Vercel, por ejempl
 
 Si quieres que también funcionen las vistas previas que Vercel crea en cada rama, añade un patrón con el nombre de tu proyecto: `https://sukinema.vercel.app,https://sukinema-*.vercel.app`.
 
-## 5. Comprobar
+## 5. Crear tu cuenta (la administradora)
 
-Abre la URL de Vercel. Debe aparecer "¿Quién está viendo?" y, al entrar, el indicador verde **Spring Boot 3 API** (arriba a la derecha en escritorio, dentro del menú en móvil). Si en su lugar pone **Catálogo Local**, el frontend no está llegando al backend: mira la tabla de abajo.
+Abre la URL de Vercel: aparece la pantalla de inicio de sesión. Pulsa **Crea una cuenta** y regístrate.
+
+Al terminar verás tu **código de recuperación**: apúntalo, porque es la única forma de recuperar la cuenta si olvidas la contraseña y no se vuelve a mostrar.
+
+**La primera cuenta que se registra es la administradora**: la única que puede añadir, editar y eliminar tráilers. Las demás cuentas solo ven el catálogo, dan likes y gestionan sus perfiles. Por eso conviene registrarse nada más desplegar, antes de compartir la dirección.
+
+Si prefieres no depender del orden, define en Render la variable `ADMIN_EMAIL` con tu correo antes de registrarte: entonces administra la cuenta que se registre con ese correo, sea o no la primera.
+
+## 6. Comprobar
+
+Tras entrar debe aparecer "¿Quién está viendo?" y, al elegir perfil, el indicador verde de conexión (arriba a la derecha; en pantallas anchas dice **Spring Boot 3 API**, y en móvil está dentro del menú). Con la cuenta administradora se ve además el botón **Nuevo Tráiler**.
+
+Si la pantalla de acceso avisa de que el servidor no responde, el frontend no está llegando al backend: mira la tabla de abajo.
 
 ## Qué esperar del plan gratuito
 
@@ -78,19 +90,49 @@ Abre la URL de Vercel. Debe aparecer "¿Quién está viendo?" y, al entrar, el i
 | --- | --- |
 | El despliegue en Render falla con "Falta la variable de entorno DATABASE_URL" | No se definió `DATABASE_URL` en el servicio |
 | Render falla con "The connection attempt failed" o "password authentication failed" | La cadena de Neon está incompleta o mal copiada |
-| La app muestra "Catálogo Local" | `VITE_API_URL` no está definida, tiene un error, o no se volvió a desplegar tras cambiarla |
+| La pantalla de acceso dice "El servidor no responde" u ofrece el modo demo | `VITE_API_URL` no está definida, tiene un error, o no se volvió a desplegar tras cambiarla |
 | La consola del navegador muestra errores de CORS o respuestas 403 "Invalid CORS request" | `CORS_ALLOWED_ORIGINS` no incluye la URL exacta del frontend (con `https://`, sin barra final) |
-| La primera carga tarda mucho | Normal: el backend estaba dormido |
+| La primera carga o el primer inicio de sesión tardan mucho | Normal: el backend estaba dormido |
+| No aparece el botón "Nuevo Tráiler" | La cuenta no es la administradora (o el perfil activo es infantil) |
+| "Demasiados intentos fallidos" | Cinco contraseñas o códigos de recuperación erróneos seguidos bloquean ese correo 5 minutos |
+| Alguien ha olvidado la contraseña y ha perdido su código de recuperación | No se puede recuperar esa cuenta; bórrala (abajo) para que pueda registrarse de nuevo con el mismo correo |
+
+## Cambiar quién administra
+
+En el editor SQL de Neon (cambia el correo por el de la cuenta):
+
+```sql
+UPDATE accounts SET role = 'ADMIN' WHERE email = 'tu@correo.com';
+```
+
+Para quitar el permiso, lo mismo con `'USER'`. El cambio vale desde la siguiente petición, sin reiniciar nada.
+
+## Borrar una cuenta
+
+En el editor SQL de Neon (cambia el correo). Borra la cuenta con sus perfiles, listas y likes:
+
+```sql
+DELETE FROM profile_my_list WHERE profile_id IN (SELECT p.id FROM user_profiles p JOIN accounts a ON a.id = p.account_id WHERE a.email = 'tu@correo.com');
+DELETE FROM profile_likes WHERE profile_id IN (SELECT p.id FROM user_profiles p JOIN accounts a ON a.id = p.account_id WHERE a.email = 'tu@correo.com');
+DELETE FROM user_profiles WHERE account_id = (SELECT id FROM accounts WHERE email = 'tu@correo.com');
+DELETE FROM accounts WHERE email = 'tu@correo.com';
+```
 
 ## Volver a los datos iniciales
 
-En el editor SQL de Neon:
+Para restaurar solo el catálogo, en el editor SQL de Neon:
 
 ```sql
-TRUNCATE movies, user_profiles RESTART IDENTITY;
+TRUNCATE movies, profile_my_list, profile_likes RESTART IDENTITY;
 ```
 
-Después reinicia el servicio en Render: al encontrar las tablas vacías, vuelve a cargar los datos iniciales.
+Después reinicia el servicio en Render: al encontrar la tabla vacía, vuelve a cargar los 15 tráilers iniciales.
+
+Para borrar también todas las cuentas y sus perfiles (la siguiente cuenta que se registre volverá a ser la administradora):
+
+```sql
+TRUNCATE profile_my_list, profile_likes, user_profiles, accounts RESTART IDENTITY CASCADE;
+```
 
 ## Probar la imagen en local (opcional)
 

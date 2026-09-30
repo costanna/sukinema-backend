@@ -2,7 +2,9 @@ package com.sukinema.service;
 
 import com.sukinema.model.Movie;
 import com.sukinema.repository.MovieRepository;
+import com.sukinema.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -10,9 +12,11 @@ import java.util.*;
 public class MovieService {
 
     private final MovieRepository movieRepository;
+    private final UserProfileRepository userProfileRepository;
 
-    public MovieService(MovieRepository movieRepository) {
+    public MovieService(MovieRepository movieRepository, UserProfileRepository userProfileRepository) {
         this.movieRepository = movieRepository;
+        this.userProfileRepository = userProfileRepository;
     }
 
     public List<Movie> getAllMovies() {
@@ -63,21 +67,37 @@ public class MovieService {
         if (query == null || query.trim().isEmpty()) {
             return getAllMovies();
         }
-        return movieRepository.searchMovies(query.trim());
+        // % y _ son comodines de LIKE: se escapan para buscarlos como texto
+        String escaped = query.trim()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        return movieRepository.searchMovies(escaped);
     }
 
-    public Movie saveMovie(Movie movie) {
-        return movieRepository.save(movie);
+    @Transactional
+    public Movie createMovie(Movie movie) {
+        // Siempre es un alta: nunca se sobrescribe un tráiler existente ni se heredan likes
+        movie.setId(null);
+        movie.setLikes(0);
+        movie.setCreatedAt(null);
+        Movie saved = movieRepository.save(movie);
+        keepSingleFeatured(saved);
+        return saved;
     }
 
+    @Transactional
     public boolean deleteMovie(Long id) {
         if (movieRepository.existsById(id)) {
+            userProfileRepository.removeMovieFromAllLists(id);
+            userProfileRepository.removeMovieFromAllLikes(id);
             movieRepository.deleteById(id);
             return true;
         }
         return false;
     }
 
+    @Transactional
     public Optional<Movie> updateMovie(Long id, Movie updated) {
         return movieRepository.findById(id).map(existing -> {
             existing.setTitle(updated.getTitle());
@@ -95,18 +115,19 @@ public class MovieService {
             existing.setFeatured(updated.isFeatured());
             existing.setTrending(updated.isTrending());
             existing.setMatchScore(updated.getMatchScore());
-            return movieRepository.save(existing);
-        });
-    }
-
-    public Optional<Movie> incrementLikes(Long id) {
-        return movieRepository.findById(id).map(movie -> {
-            movie.setLikes(movie.getLikes() + 1);
-            return movieRepository.save(movie);
+            Movie saved = movieRepository.save(existing);
+            keepSingleFeatured(saved);
+            return saved;
         });
     }
 
     public long count() {
         return movieRepository.count();
+    }
+
+    private void keepSingleFeatured(Movie saved) {
+        if (saved.isFeatured()) {
+            movieRepository.clearFeaturedExcept(saved.getId());
+        }
     }
 }

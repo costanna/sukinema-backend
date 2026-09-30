@@ -1,9 +1,7 @@
 package com.sukinema.init;
 
 import com.sukinema.model.Movie;
-import com.sukinema.model.UserProfile;
 import com.sukinema.repository.MovieRepository;
-import com.sukinema.repository.UserProfileRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -14,31 +12,14 @@ import java.util.List;
 public class DataInitializer implements CommandLineRunner {
 
     private final MovieRepository movieRepository;
-    private final UserProfileRepository userProfileRepository;
 
-    public DataInitializer(MovieRepository movieRepository, UserProfileRepository userProfileRepository) {
+    public DataInitializer(MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
-        this.userProfileRepository = userProfileRepository;
     }
 
-    private void seedProfiles() {
-        if (userProfileRepository.count() > 0) {
-            return;
-        }
-
-        userProfileRepository.saveAll(Arrays.asList(
-                new UserProfile("Anna", "🍿", "from-red-600 to-rose-700", false),
-                new UserProfile("Cineasta", "🎬", "from-blue-600 to-indigo-800", false),
-                new UserProfile("Anime Fan", "⚡", "from-amber-500 to-orange-700", false),
-                new UserProfile("Kids", "🦄", "from-emerald-500 to-teal-700", true)
-        ));
-        System.out.println(">>> [SUKINEMA DATA] 4 perfiles inicializados con éxito.");
-    }
-
+    // Los perfiles ya no se siembran: cada cuenta crea los suyos al registrarse
     @Override
     public void run(String... args) {
-        seedProfiles();
-
         if (movieRepository.count() > 0) {
             return;
         }
