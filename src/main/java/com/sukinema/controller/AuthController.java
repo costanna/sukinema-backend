@@ -21,17 +21,17 @@ import java.util.Map;
 public class AuthController {
 
     // BCrypt solo tiene en cuenta los primeros 72 bytes
-    private static final String PASSWORD_RULE = "La contraseña debe tener entre 8 y 72 caracteres";
+    private static final String PASSWORD_RULE = "{validation.account.password.size}";
 
     public record RegisterRequest(
-            @NotBlank(message = "El nombre es obligatorio")
-            @Size(max = 40, message = "El nombre no puede superar los 40 caracteres")
+            @NotBlank(message = "{validation.account.name.required}")
+            @Size(max = 40, message = "{validation.account.name.size}")
             String name,
-            @NotBlank(message = "El correo es obligatorio")
-            @Email(message = "El correo no tiene un formato válido")
-            @Size(max = 120, message = "El correo no puede superar los 120 caracteres")
+            @NotBlank(message = "{validation.account.email.required}")
+            @Email(message = "{validation.account.email.format}")
+            @Size(max = 120, message = "{validation.account.email.size}")
             String email,
-            @NotBlank(message = "La contraseña es obligatoria")
+            @NotBlank(message = "{validation.account.password.required}")
             @Size(min = 8, max = 72, message = PASSWORD_RULE)
             String password) {
 
@@ -43,26 +43,26 @@ public class AuthController {
     }
 
     public record LoginRequest(
-            @NotBlank(message = "El correo es obligatorio") String email,
-            @NotBlank(message = "La contraseña es obligatoria") String password) {
+            @NotBlank(message = "{validation.account.email.required}") String email,
+            @NotBlank(message = "{validation.account.password.required}") String password) {
     }
 
     public record RecoverRequest(
-            @NotBlank(message = "El correo es obligatorio") String email,
-            @NotBlank(message = "El código de recuperación es obligatorio") String recoveryCode,
-            @NotBlank(message = "La contraseña nueva es obligatoria")
+            @NotBlank(message = "{validation.account.email.required}") String email,
+            @NotBlank(message = "{validation.account.recoveryCode.required}") String recoveryCode,
+            @NotBlank(message = "{validation.account.newPassword.required}")
             @Size(min = 8, max = 72, message = PASSWORD_RULE)
             String newPassword) {
     }
 
     public record ChangePasswordRequest(
-            @NotBlank(message = "La contraseña actual es obligatoria") String currentPassword,
-            @NotBlank(message = "La contraseña nueva es obligatoria")
+            @NotBlank(message = "{validation.account.currentPassword.required}") String currentPassword,
+            @NotBlank(message = "{validation.account.newPassword.required}")
             @Size(min = 8, max = 72, message = PASSWORD_RULE)
             String newPassword) {
     }
 
-    public record PasswordRequest(@NotBlank(message = "La contraseña es obligatoria") String password) {
+    public record PasswordRequest(@NotBlank(message = "{validation.account.password.required}") String password) {
     }
 
     public record AccountView(Long id, String name, String email, String role) {

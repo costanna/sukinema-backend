@@ -19,16 +19,16 @@ public class UserProfile {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
-    @NotBlank(message = "El nombre de perfil es obligatorio")
-    @Size(max = 20, message = "El nombre de perfil no puede superar los 20 caracteres")
+    @NotBlank(message = "{validation.profile.name.required}")
+    @Size(max = 20, message = "{validation.profile.name.size}")
     @Column(nullable = false)
     private String name;
 
-    @Size(max = 500, message = "El avatar no es válido")
+    @Size(max = 500, message = "{validation.profile.avatar.size}")
     @Column(length = 500)
     private String avatar;
 
-    @Size(max = 255, message = "El color no es válido")
+    @Size(max = 255, message = "{validation.profile.color.size}")
     private String color;
 
     private boolean isKid = false;

@@ -1,9 +1,12 @@
 package com.sukinema.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sukinema.model.Account;
 import com.sukinema.repository.AccountRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -25,10 +29,15 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final TokenService tokenService;
     private final AccountRepository accountRepository;
+    private final MessageSource messageSource;
+    private final ObjectMapper objectMapper;
 
-    public AuthInterceptor(TokenService tokenService, AccountRepository accountRepository) {
+    public AuthInterceptor(TokenService tokenService, AccountRepository accountRepository,
+                           MessageSource messageSource, ObjectMapper objectMapper) {
         this.tokenService = tokenService;
         this.accountRepository = accountRepository;
+        this.messageSource = messageSource;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -51,7 +60,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (account.isEmpty()) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"message\":\"Inicia sesión para continuar.\"}");
+            String message = messageSource.getMessage("error.auth.required", null, LocaleContextHolder.getLocale());
+            response.getWriter().write(objectMapper.writeValueAsString(Map.of("message", message)));
             return false;
         }
 

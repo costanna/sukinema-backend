@@ -35,7 +35,9 @@ Cambiar o restablecer la contraseña cierra las sesiones abiertas en otros dispo
 
 ## API
 
-Los errores devuelven `{"message": "..."}` con el motivo.
+Los errores devuelven `{"message": "..."}` con el motivo, en el idioma de la cabecera `Accept-Language`: catalán (`ca`), inglés (`en`) o castellano (`es`). Sin cabecera, o con otro idioma, llegan en castellano. Los textos están en `src/main/resources/messages.properties` (castellano), `messages_ca.properties` y `messages_en.properties`; los tres deben tener las mismas claves, y un test lo comprueba.
+
+El catálogo se guarda en un solo idioma (los tráilers iniciales, en castellano); es el frontend quien lo traduce al mostrarlo.
 
 | Método | Ruta | Descripción | Acceso |
 | --- | --- | --- | --- |

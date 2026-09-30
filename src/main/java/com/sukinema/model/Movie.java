@@ -20,51 +20,51 @@ public class Movie {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
-    @NotBlank(message = "El título es obligatorio")
-    @Size(max = 255, message = "El título no puede superar los 255 caracteres")
+    @NotBlank(message = "{validation.movie.title.required}")
+    @Size(max = 255, message = "{validation.movie.title.size}")
     private String title;
 
-    @Size(max = 2000, message = "La sinopsis no puede superar los 2000 caracteres")
+    @Size(max = 2000, message = "{validation.movie.overview.size}")
     @Column(length = 2000)
     private String overview;
 
-    @NotBlank(message = "La URL del tráiler es obligatoria")
-    @Size(max = 255, message = "La URL del tráiler no puede superar los 255 caracteres")
+    @NotBlank(message = "{validation.movie.trailerUrl.required}")
+    @Size(max = 255, message = "{validation.movie.trailerUrl.size}")
     private String trailerUrl;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String youtubeId;
 
-    @Size(max = 1000, message = "La URL de la imagen de fondo no puede superar los 1000 caracteres")
+    @Size(max = 1000, message = "{validation.movie.backdropUrl.size}")
     @Column(length = 1000)
     private String backdropUrl;
 
-    @Size(max = 1000, message = "La URL del póster no puede superar los 1000 caracteres")
+    @Size(max = 1000, message = "{validation.movie.posterUrl.size}")
     @Column(length = 1000)
     private String posterUrl;
 
     private Integer releaseYear;
 
-    @Size(max = 255, message = "La coincidencia no puede superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.matchScore.size}")
     private String matchScore;
 
-    @Size(max = 255, message = "La clasificación no puede superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.ageRating.size}")
     private String ageRating;
 
-    @Size(max = 255, message = "La duración no puede superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.duration.size}")
     private String duration;
 
-    @Size(max = 255, message = "La categoría no puede superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.category.size}")
     private String category;
 
-    @Size(max = 255, message = "Los géneros no pueden superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.genres.size}")
     private String genres;
 
-    @Size(max = 255, message = "El reparto no puede superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.cast.size}")
     @Column(name = "movie_cast")
     private String cast;
 
-    @Size(max = 255, message = "El director no puede superar los 255 caracteres")
+    @Size(max = 255, message = "{validation.movie.director.size}")
     private String director;
 
     private boolean featured = false;
@@ -121,7 +121,7 @@ public class Movie {
 
     // La validación falla si la URL no lleva a un vídeo de YouTube
     @JsonIgnore
-    @AssertTrue(message = "La URL del tráiler debe ser un enlace o un ID de vídeo de YouTube")
+    @AssertTrue(message = "{validation.movie.trailerUrl.youtube}")
     public boolean isYoutubeTrailer() {
         return trailerUrl == null || trailerUrl.isBlank() || !extractYoutubeId(trailerUrl).isEmpty();
     }

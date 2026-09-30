@@ -76,11 +76,11 @@ public class ProfileLibraryService {
 
     private UserProfile requireProfile(Account account, Long profileId) {
         return userProfileRepository.findByIdAndAccountId(profileId, account.getId())
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Perfil no encontrado."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.profile.notFound"));
     }
 
     private Movie requireMovie(Long movieId) {
         return movieRepository.findById(movieId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Tráiler no encontrado."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.movie.notFound"));
     }
 }

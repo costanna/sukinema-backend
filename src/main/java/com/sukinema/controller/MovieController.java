@@ -96,7 +96,7 @@ public class MovieController {
     // Cualquier cuenta ve el catálogo; modificarlo es cosa de la cuenta administradora
     private static void requireAdmin(Account account) {
         if (!account.isAdmin()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Solo la cuenta administradora puede modificar el catálogo.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.admin.required");
         }
     }
 }

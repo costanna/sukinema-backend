@@ -34,11 +34,11 @@ public class UserProfileService {
     @Transactional
     public UserProfile createProfile(Account account, UserProfile request) {
         if (userProfileRepository.countByAccountId(account.getId()) >= MAX_PROFILES) {
-            throw new ApiException(HttpStatus.CONFLICT, "Una cuenta puede tener como máximo " + MAX_PROFILES + " perfiles.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.profile.max", MAX_PROFILES);
         }
         String name = request.getName().trim();
         if (userProfileRepository.existsByAccountIdAndNameIgnoreCase(account.getId(), name)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Ya existe un perfil con ese nombre.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.profile.duplicate");
         }
         // Se copia campo a campo: la petición no puede fijar el id ni la cuenta
         UserProfile profile = new UserProfile(name, request.getAvatar(), request.getColor(), request.isKid());
@@ -51,7 +51,7 @@ public class UserProfileService {
         return userProfileRepository.findByIdAndAccountId(id, account.getId()).map(existing -> {
             String name = updated.getName().trim();
             if (userProfileRepository.existsByAccountIdAndNameIgnoreCaseAndIdNot(account.getId(), name, id)) {
-                throw new ApiException(HttpStatus.CONFLICT, "Ya existe un perfil con ese nombre.");
+                throw new ApiException(HttpStatus.CONFLICT, "error.profile.duplicate");
             }
             existing.setName(name);
             // Avatar y color se conservan si no vienen en la petición
@@ -73,7 +73,7 @@ public class UserProfileService {
             return false;
         }
         if (userProfileRepository.countByAccountId(account.getId()) <= 1) {
-            throw new ApiException(HttpStatus.CONFLICT, "La cuenta debe conservar al menos un perfil.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.profile.last");
         }
         userProfileRepository.delete(profile.get());
         return true;

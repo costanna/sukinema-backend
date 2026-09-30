@@ -30,7 +30,7 @@ public class AccountService {
     // Sin 0/O ni 1/I, que se confunden al copiar el código a mano
     private static final String RECOVERY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int RECOVERY_CODE_LENGTH = 12;
-    private static final String TOO_MANY_ATTEMPTS = "Demasiados intentos fallidos. Espera unos minutos y vuelve a intentarlo.";
+    private static final String TOO_MANY_ATTEMPTS = "error.account.tooManyAttempts";
 
     private final AccountRepository accountRepository;
     private final UserProfileRepository userProfileRepository;
@@ -55,7 +55,7 @@ public class AccountService {
     public AccountWithRecoveryCode register(String name, String email, String password) {
         String normalizedEmail = normalizeEmail(email);
         if (accountRepository.existsByEmail(normalizedEmail)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Ya existe una cuenta con ese correo.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.account.emailTaken");
         }
 
         // Administra el catálogo la cuenta de ADMIN_EMAIL o, si no se ha definido, la primera que se registra
@@ -93,7 +93,7 @@ public class AccountService {
         if (account.isEmpty() || !matches) {
             loginAttemptLimiter.recordFailure(normalizedEmail);
             // Mismo mensaje en los dos casos: no se revela qué correos tienen cuenta
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "error.account.badCredentials");
         }
 
         loginAttemptLimiter.reset(normalizedEmail);
@@ -115,7 +115,7 @@ public class AccountService {
         boolean matches = passwordEncoder.matches(normalizeRecoveryCode(recoveryCode), storedHash != null ? storedHash : dummyHash);
         if (found.isEmpty() || storedHash == null || !matches) {
             loginAttemptLimiter.recordFailure(limiterKey);
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "El correo o el código de recuperación no son correctos.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "error.account.badRecovery");
         }
 
         Account account = found.get();
@@ -146,7 +146,7 @@ public class AccountService {
     private void requirePassword(Account account, String password) {
         if (!passwordEncoder.matches(password, account.getPasswordHash())) {
             // 403 y no 401: la sesión es válida, lo que falla es esta comprobación
-            throw new ApiException(HttpStatus.FORBIDDEN, "La contraseña actual no es correcta.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.account.wrongPassword");
         }
     }
 
