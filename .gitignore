@@ -1,0 +1,15 @@
+# Maven
+target/
+
+# Variables de entorno y credenciales (nunca al repositorio)
+.env
+.env.*
+!.env.example
+
+# IDE / SO
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.log

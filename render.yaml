@@ -1,0 +1,19 @@
+# Blueprint de Render: crea el servicio web del backend a partir del Dockerfile de este repositorio.
+# Render pedirá el valor de las variables marcadas con sync: false al crear el Blueprint.
+services:
+  - type: web
+    name: sukinema-backend
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      # Cadena de conexión de Neon, tal cual la da su panel (postgresql://...)
+      - key: DATABASE_URL
+        sync: false
+      # URL del frontend en Vercel, p. ej. https://sukinema.vercel.app (varias separadas por comas)
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
