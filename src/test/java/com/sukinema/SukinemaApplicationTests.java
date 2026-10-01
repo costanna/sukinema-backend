@@ -52,8 +52,6 @@ class SukinemaApplicationTests {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // ---------- utilidades ----------
-
     private JsonNode json(MvcResult result) throws Exception {
         return objectMapper.readTree(result.getResponse().getContentAsString(StandardCharsets.UTF_8));
     }
@@ -111,8 +109,6 @@ class SukinemaApplicationTests {
         return json(result).get("id").asLong();
     }
 
-    // ---------- datos iniciales ----------
-
     @Test
     void contextLoads() {
         assertNotNull(movieService);
@@ -127,7 +123,7 @@ class SukinemaApplicationTests {
 
     @Test
     void testFeaturedMovie() {
-        Movie featured = movieService.getFeaturedMovie();
+        Movie featured = movieService.getFeaturedMovie().orElse(null);
         assertNotNull(featured, "Debe existir un tráiler destacado");
         assertFalse(featured.getYoutubeId().isEmpty(), "El tráiler destacado debe tener un ID de YouTube");
     }
@@ -151,8 +147,6 @@ class SukinemaApplicationTests {
         assertEquals("", Movie.extractYoutubeId("https://example.com/video.mp4"));
         assertEquals("", Movie.extractYoutubeId(null));
     }
-
-    // ---------- acceso ----------
 
     @Test
     void testRegisterReturnsSessionWithoutPassword() throws Exception {
@@ -298,8 +292,6 @@ class SukinemaApplicationTests {
         mockMvc.perform(delete("/api/movies/" + id).with(auth(adminToken()))).andExpect(status().isNotFound());
     }
 
-    // ---------- perfiles ----------
-
     @Test
     void testNewAccountStartsWithOneProfile() throws Exception {
         String token = tokenFor("Un nombre de cuenta bastante largo", "larga@sukinema.test");
@@ -397,8 +389,6 @@ class SukinemaApplicationTests {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("al menos un perfil")));
     }
-
-    // ---------- catálogo ----------
 
     @Test
     void testCreateMovieIgnoresServerOwnedFields() throws Exception {
@@ -508,7 +498,6 @@ class SukinemaApplicationTests {
         mockMvc.perform(put(libraryPath(user, "likes", 999999)).with(auth(user)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Tráiler no encontrado."));
-        // El contador libre de antes ya no existe
         mockMvc.perform(post("/api/movies/" + id + "/like").with(auth(user))).andExpect(status().is4xxClientError());
         assertEquals(1, movieService.getMovieById(id).orElseThrow().getLikes());
         movieService.deleteMovie(id);
@@ -573,8 +562,6 @@ class SukinemaApplicationTests {
         // El tráiler sigue existiendo y se puede eliminar sin restos del perfil borrado
         mockMvc.perform(delete("/api/movies/" + movie).with(auth(adminToken()))).andExpect(status().isNoContent());
     }
-
-    // ---------- contraseñas ----------
 
     @Test
     void testChangePasswordClosesOtherSessions() throws Exception {
@@ -720,8 +707,6 @@ class SukinemaApplicationTests {
                 .andExpect(jsonPath("$.length()").value(1));
         movieService.deleteMovie(id);
     }
-
-    // ---------- CORS ----------
 
     @Test
     void testCorsWithSession() throws Exception {

@@ -2,6 +2,8 @@ package com.sukinema.init;
 
 import com.sukinema.model.Movie;
 import com.sukinema.repository.MovieRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -11,13 +13,14 @@ import java.util.List;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
+
     private final MovieRepository movieRepository;
 
     public DataInitializer(MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
     }
 
-    // Los perfiles ya no se siembran: cada cuenta crea los suyos al registrarse
     @Override
     public void run(String... args) {
         if (movieRepository.count() > 0) {
@@ -283,6 +286,6 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         movieRepository.saveAll(movies);
-        System.out.println(">>> [SUKINEMA DATA] 15 películas y trailers inicializados con éxito.");
+        log.info("Catálogo inicial cargado: {} tráilers", movies.size());
     }
 }

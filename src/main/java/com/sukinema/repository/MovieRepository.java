@@ -18,9 +18,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     List<Movie> findByCategoryIgnoreCase(String category);
 
-    @Query("SELECT DISTINCT m.category FROM Movie m WHERE m.category IS NOT NULL")
-    List<String> findDistinctCategories();
-
     // :query llega con % y _ escapados (ver MovieService.searchMovies)
     @Query("SELECT m FROM Movie m WHERE " +
            "LOWER(m.title) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\' OR " +

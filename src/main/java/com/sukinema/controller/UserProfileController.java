@@ -1,6 +1,7 @@
 package com.sukinema.controller;
 
 import com.sukinema.auth.AuthInterceptor;
+import com.sukinema.exception.ApiException;
 import com.sukinema.model.Account;
 import com.sukinema.model.UserProfile;
 import com.sukinema.service.UserProfileService;
@@ -30,9 +31,7 @@ public class UserProfileController {
     @GetMapping("/{id}")
     public ResponseEntity<UserProfile> getProfileById(
             @RequestAttribute(AuthInterceptor.ACCOUNT_ATTRIBUTE) Account account, @PathVariable Long id) {
-        return userProfileService.getProfile(account, id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(userProfileService.getProfile(account, id).orElseThrow(UserProfileController::notFound));
     }
 
     @PostMapping
@@ -47,17 +46,19 @@ public class UserProfileController {
     public ResponseEntity<UserProfile> updateProfile(
             @RequestAttribute(AuthInterceptor.ACCOUNT_ATTRIBUTE) Account account,
             @PathVariable Long id, @Valid @RequestBody UserProfile profile) {
-        return userProfileService.updateProfile(account, id, profile)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(userProfileService.updateProfile(account, id, profile).orElseThrow(UserProfileController::notFound));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProfile(
             @RequestAttribute(AuthInterceptor.ACCOUNT_ATTRIBUTE) Account account, @PathVariable Long id) {
-        if (userProfileService.deleteProfile(account, id)) {
-            return ResponseEntity.noContent().build();
+        if (!userProfileService.deleteProfile(account, id)) {
+            throw notFound();
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build();
+    }
+
+    private static ApiException notFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "error.profile.notFound");
     }
 }

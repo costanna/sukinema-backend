@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -31,6 +32,8 @@ public class AccountService {
     private static final String RECOVERY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int RECOVERY_CODE_LENGTH = 12;
     private static final String TOO_MANY_ATTEMPTS = "error.account.tooManyAttempts";
+    // BCrypt ignora lo que pase de 72 bytes: con acentos o emojis, 72 caracteres pueden ocupar más
+    private static final int BCRYPT_MAX_BYTES = 72;
 
     private final AccountRepository accountRepository;
     private final UserProfileRepository userProfileRepository;
@@ -53,6 +56,7 @@ public class AccountService {
 
     @Transactional
     public AccountWithRecoveryCode register(String name, String email, String password) {
+        requireStorablePassword(password);
         String normalizedEmail = normalizeEmail(email);
         if (accountRepository.existsByEmail(normalizedEmail)) {
             throw new ApiException(HttpStatus.CONFLICT, "error.account.emailTaken");
@@ -89,7 +93,8 @@ public class AccountService {
         }
 
         Optional<Account> account = accountRepository.findByEmail(normalizedEmail);
-        boolean matches = passwordEncoder.matches(password, account.map(Account::getPasswordHash).orElse(dummyHash));
+        boolean matches = passwordEncoder.matches(password, account.map(Account::getPasswordHash).orElse(dummyHash))
+                && fitsBcrypt(password);
         if (account.isEmpty() || !matches) {
             loginAttemptLimiter.recordFailure(normalizedEmail);
             // Mismo mensaje en los dos casos: no se revela qué correos tienen cuenta
@@ -103,6 +108,7 @@ public class AccountService {
     /** Pone una contraseña nueva a quien demuestra tener el código de recuperación de la cuenta. */
     @Transactional
     public AccountWithRecoveryCode recover(String email, String recoveryCode, String newPassword) {
+        requireStorablePassword(newPassword);
         String normalizedEmail = normalizeEmail(email);
         // Contador aparte del de inicio de sesión: adivinar el código también se frena
         String limiterKey = "recover:" + normalizedEmail;
@@ -131,6 +137,7 @@ public class AccountService {
     @Transactional
     public Account changePassword(Account account, String currentPassword, String newPassword) {
         requirePassword(account, currentPassword);
+        requireStorablePassword(newPassword);
         setPassword(account, newPassword);
         return accountRepository.save(account);
     }
@@ -144,9 +151,19 @@ public class AccountService {
     }
 
     private void requirePassword(Account account, String password) {
-        if (!passwordEncoder.matches(password, account.getPasswordHash())) {
+        if (!fitsBcrypt(password) || !passwordEncoder.matches(password, account.getPasswordHash())) {
             // 403 y no 401: la sesión es válida, lo que falla es esta comprobación
             throw new ApiException(HttpStatus.FORBIDDEN, "error.account.wrongPassword");
+        }
+    }
+
+    private static boolean fitsBcrypt(String password) {
+        return password != null && password.getBytes(StandardCharsets.UTF_8).length <= BCRYPT_MAX_BYTES;
+    }
+
+    private static void requireStorablePassword(String password) {
+        if (!fitsBcrypt(password)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "validation.account.password.size");
         }
     }
 

@@ -3,6 +3,7 @@ package com.sukinema.service;
 import com.sukinema.model.Movie;
 import com.sukinema.repository.MovieRepository;
 import com.sukinema.repository.UserProfileRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +11,8 @@ import java.util.*;
 
 @Service
 public class MovieService {
+
+    static final String TRENDING_ROW = "Tendencias de Hoy";
 
     private final MovieRepository movieRepository;
     private final UserProfileRepository userProfileRepository;
@@ -27,13 +30,9 @@ public class MovieService {
         return movieRepository.findById(id);
     }
 
-    public Movie getFeaturedMovie() {
-        List<Movie> featured = movieRepository.findByFeaturedTrue();
-        if (!featured.isEmpty()) {
-            return featured.get(0);
-        }
-        List<Movie> all = movieRepository.findAll();
-        return all.isEmpty() ? null : all.get(0);
+    public Optional<Movie> getFeaturedMovie() {
+        return movieRepository.findByFeaturedTrue().stream().findFirst()
+                .or(() -> movieRepository.findAll(Sort.by("id")).stream().findFirst());
     }
 
     public List<Movie> getTrendingMovies() {
@@ -44,22 +43,31 @@ public class MovieService {
         return movieRepository.findByCategoryIgnoreCase(category);
     }
 
+    /**
+     * Fila de tendencias y una fila por categoría, en el orden en que aparecen. Las categorías que solo
+     * se diferencian en mayúsculas van juntas, con el nombre de la primera.
+     */
     public Map<String, List<Movie>> getMoviesGroupedByCategory() {
+        List<Movie> movies = movieRepository.findAll(Sort.by("id"));
         Map<String, List<Movie>> grouped = new LinkedHashMap<>();
+        Map<String, String> rowNames = new HashMap<>();
 
-        List<Movie> trending = movieRepository.findByTrendingTrue();
+        List<Movie> trending = new ArrayList<>(movies.stream().filter(Movie::isTrending).toList());
         if (!trending.isEmpty()) {
-            grouped.put("Tendencias de Hoy", trending);
+            grouped.put(TRENDING_ROW, trending);
+            rowNames.put(TRENDING_ROW.toLowerCase(Locale.ROOT), TRENDING_ROW);
         }
-
-        List<String> categories = movieRepository.findDistinctCategories();
-        for (String cat : categories) {
-            List<Movie> list = movieRepository.findByCategoryIgnoreCase(cat);
-            if (!list.isEmpty()) {
-                grouped.put(cat, list);
+        for (Movie movie : movies) {
+            String category = movie.getCategory() == null ? "" : movie.getCategory().trim();
+            if (category.isEmpty()) {
+                continue;
+            }
+            String row = rowNames.computeIfAbsent(category.toLowerCase(Locale.ROOT), key -> category);
+            List<Movie> list = grouped.computeIfAbsent(row, key -> new ArrayList<>());
+            if (!list.contains(movie)) {
+                list.add(movie);
             }
         }
-
         return grouped;
     }
 
@@ -88,13 +96,13 @@ public class MovieService {
 
     @Transactional
     public boolean deleteMovie(Long id) {
-        if (movieRepository.existsById(id)) {
-            userProfileRepository.removeMovieFromAllLists(id);
-            userProfileRepository.removeMovieFromAllLikes(id);
-            movieRepository.deleteById(id);
-            return true;
+        if (!movieRepository.existsById(id)) {
+            return false;
         }
-        return false;
+        userProfileRepository.removeMovieFromAllLists(id);
+        userProfileRepository.removeMovieFromAllLikes(id);
+        movieRepository.deleteById(id);
+        return true;
     }
 
     @Transactional
@@ -119,10 +127,6 @@ public class MovieService {
             keepSingleFeatured(saved);
             return saved;
         });
-    }
-
-    public long count() {
-        return movieRepository.count();
     }
 
     private void keepSingleFeatured(Movie saved) {

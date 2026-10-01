@@ -30,11 +30,7 @@ public class MovieController {
 
     @GetMapping("/featured")
     public ResponseEntity<Movie> getFeaturedMovie() {
-        Movie featured = movieService.getFeaturedMovie();
-        if (featured == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(featured);
+        return ResponseEntity.ok(movieService.getFeaturedMovie().orElseThrow(MovieController::notFound));
     }
 
     @GetMapping("/categories")
@@ -54,9 +50,7 @@ public class MovieController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
-        return movieService.getMovieById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(movieService.getMovieById(id).orElseThrow(MovieController::notFound));
     }
 
     @GetMapping("/search")
@@ -78,25 +72,26 @@ public class MovieController {
             @RequestAttribute(AuthInterceptor.ACCOUNT_ATTRIBUTE) Account account,
             @PathVariable Long id, @Valid @RequestBody Movie movie) {
         requireAdmin(account);
-        return movieService.updateMovie(id, movie)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(movieService.updateMovie(id, movie).orElseThrow(MovieController::notFound));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMovie(
             @RequestAttribute(AuthInterceptor.ACCOUNT_ATTRIBUTE) Account account, @PathVariable Long id) {
         requireAdmin(account);
-        if (movieService.deleteMovie(id)) {
-            return ResponseEntity.noContent().build();
+        if (!movieService.deleteMovie(id)) {
+            throw notFound();
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build();
     }
 
-    // Cualquier cuenta ve el catálogo; modificarlo es cosa de la cuenta administradora
     private static void requireAdmin(Account account) {
         if (!account.isAdmin()) {
             throw new ApiException(HttpStatus.FORBIDDEN, "error.admin.required");
         }
+    }
+
+    private static ApiException notFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "error.movie.notFound");
     }
 }

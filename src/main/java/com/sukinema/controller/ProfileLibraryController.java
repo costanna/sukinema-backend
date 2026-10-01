@@ -40,7 +40,6 @@ public class ProfileLibraryController {
         return ResponseEntity.noContent().build();
     }
 
-    // Devuelven el tráiler con su contador de likes actualizado
     @PutMapping("/likes/{movieId}")
     public ResponseEntity<Movie> like(
             @RequestAttribute(AuthInterceptor.ACCOUNT_ATTRIBUTE) Account account,

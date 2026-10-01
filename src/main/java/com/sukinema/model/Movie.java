@@ -119,7 +119,6 @@ public class Movie {
         }
     }
 
-    // La validación falla si la URL no lleva a un vídeo de YouTube
     @JsonIgnore
     @AssertTrue(message = "{validation.movie.trailerUrl.youtube}")
     public boolean isYoutubeTrailer() {
@@ -146,7 +145,6 @@ public class Movie {
         return "";
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }

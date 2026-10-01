@@ -20,7 +20,6 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    // BCrypt solo tiene en cuenta los primeros 72 bytes
     private static final String PASSWORD_RULE = "{validation.account.password.size}";
 
     public record RegisterRequest(
