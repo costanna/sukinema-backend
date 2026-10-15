@@ -80,6 +80,7 @@ Si la pantalla de acceso avisa de que el servidor no responde, el frontend no es
 ## Qué esperar del plan gratuito
 
 - **Render duerme el backend** tras unos 15 minutos sin visitas. La siguiente visita tarda cerca de un minuto; la app muestra "El servidor se está despertando" mientras tanto.
+- **Keep-awake integrado (estilo woke-dyno, sin servicios extra):** con `KEEP_AWAKE_ENABLED=true` y `KEEP_AWAKE_URL` con la URL pública + `/api/health`, un hilo interno la pide cada `KEEP_AWAKE_INTERVAL_MS` (10 min) y el plan gratuito no se duerme nunca. Despierto 24/7 gasta ~720 h/mes de las 750 h gratuitas: vale para un solo servicio; con más servicios en Render, apágalo.
 - **Neon suspende la base de datos** tras unos minutos sin uso y la reanuda sola en la primera consulta.
 - Los datos ya no se pierden al reiniciar el backend: viven en Neon.
 - Los límites de los planes gratuitos cambian; revisa los actuales en cada servicio.
